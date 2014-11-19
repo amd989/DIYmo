@@ -3,24 +3,29 @@ from models import Switch
 __author__ = 'Alejandro'
 #!flask/bin/python
 
-from pifacedigitalio import PiFaceDigital
+# from pifacedigitalio import PiFaceDigital
 from flask import Flask, jsonify
 from flask import abort
 from flask import make_response
 from flask import url_for
 from flask import request
+from flask.ext.cors import CORS
 from flask.ext.httpauth import HTTPBasicAuth
 
 # configuration
 SECRET_KEY = 'da96faab-fe57-4bfb-b433-5edff2f1587f'
 
-
 # create our little application
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config.from_envvar('DIYmo_SETTINGS', silent=True)
+
+# Set CORS options on app configuration
+# app.config['CORS_HEADERS'] = "Content-Type"
+# app.config['CORS_RESOURCES'] = {r"/api/*": {"origins": "*"}}
+# cors = CORS(app)
 auth = HTTPBasicAuth()
-piFaceDigital = PiFaceDigital()
+# piFaceDigital = PiFaceDigital()
 
 
 @auth.get_password
@@ -41,48 +46,57 @@ def index():
     return "DIYmo, (deemo)"
 
 
-@app.route('/api/v1.0/switches', methods=['GET'])
+@app.route('/api/v1/switches', methods=['GET'])
+@auth.login_required
 def get_switches():
     return jsonify({'switches': map(make_public_switch, Switch.select())})
 
 
 def make_public_switch(switch):
-    new_switch = {}
-    for field in switch:
-        if field == 'id':
-            new_switch['uri'] = url_for('get_switch', switch_id=switch['id'], _external=True)
-        else:
-            new_switch[field] = switch[field]
+    new_switch = switch.json()
+    new_switch['uri'] = url_for('get_switch', switch_id=switch.id, _external=True)
     return new_switch
 
 
-@app.route('/api/v1.0/switches/<int:switch_id>', methods=['GET'])
+@app.route('/api/v1/switches/<int:switch_id>', methods=['GET'])
+@auth.login_required
 def get_switch(switch_id):
-    switch = filter(lambda t: t['id'] == switch_id, switches)
-    if len(switch) == 0:
+    try:
+        switch = Switch.get(Switch.id == switch_id)
+    except Switch.DoesNotExists:
+        switch = None
+
+    if switch is None:
         abort(404)
-    return jsonify({'switch': switch[0]})
+
+    return jsonify({'switch': make_public_switch(switch)})
 
 
-@app.route('/api/v1.0/switches/toggle/<int:switch_id>', methods=['PUT'])
+@app.route('/api/v1/switches/toggle/<int:switch_id>', methods=['PUT'])
+@auth.login_required
 def toggle_switch(switch_id):
-    switch = Switch.get(Switch.id == switch_id)
-    if len(switch) == 0:
+    try:
+        switch = Switch.get(Switch.id == switch_id)
+    except Switch.DoesNotExists:
+        switch = None
+
+    if switch is None:
         abort(404)
 
-    pin = piFaceDigital.output_pins[switch.pin]
-    state = switch.state
-    if state:
-        pin.turn_off()
-    else:
-        pin.turn_on()
+    # pin = piFaceDigital.output_pins[switch.pin]
+    # state = switch.state
+    # if state:
+    #     pin.turn_off()
+    # else:
+    #     pin.turn_on()
 
     switch.state = not state
     switch.save()
     return jsonify({'state': switch.state})
 
 
-@app.route('/api/v1.0/switches', methods=['POST'])
+@app.route('/api/v1/switches', methods=['POST'])
+@auth.login_required
 def create_switch():
     if not request.json or not 'title' in request.json:
         abort(400)
@@ -91,35 +105,49 @@ def create_switch():
                            description=request.json.get('description', ""),
                            state=False,
                            pin=request.json['pin'])
-    return jsonify({'switch': switch}), 201
+    return jsonify({'switch': make_public_switch(switch)}), 201
 
 
-@app.route('/api/v1.0/switches/<int:switch_id>', methods=['PUT'])
+@app.route('/api/v1/switches/<int:switch_id>', methods=['PUT'])
+@auth.login_required
 def update_switch(switch_id):
-    switch = Switch.get(Switch.id == switch_id)
-    if len(switch) == 0:
+    try:
+        switch = Switch.get(Switch.id == switch_id)
+    except Switch.DoesNotExists:
+        switch = None
+
+    if switch is None:
         abort(404)
-    if not request.json:
-        abort(400)
-    if 'title' in request.json and type(request.json['title']) != unicode:
-        abort(400)
-    if 'description' in request.json and type(request.json['description']) is not unicode:
-        abort(400)
-    if 'done' in request.json and type(request.json['done']) is not bool:
-        abort(400)
+    # if not request.json:
+    #     abort(400)
+    # if 'title' in request.json and type(request.json['title']) is not unicode:
+    #     abort(400)
+    # if 'description' in request.json and type(request.json['description']) is not unicode:
+    #     abort(400)
+    # if 'pin' in request.json and type(request.json['pin']) is not unicode:
+    #     abort(400)
+    # if 'state' in request.json and type(request.json['state']) is not bool:
+    #     abort(400)
 
     switch.title = request.json.get('title', switch.title)
     switch.description = request.json.get('description', switch.description)
     switch.pin = request.json.get('pin', switch.pin)
+    switch.state = request.json.get('state', switch.state)
     switch.save()
-    return jsonify({'switch': switch})
+    return jsonify({'switch': make_public_switch(switch)})
 
 
-@app.route('/api/v1.0/switches/<int:switch_id>', methods=['DELETE'])
+@app.route('/api/v1/switches/<int:switch_id>', methods=['DELETE'])
+@auth.login_required
 def delete_switch(switch_id):
-    switch = Switch.get(Switch.id == switch_id)
-    if len(switch) == 0:
+    try:
+        switch = Switch.get(Switch.id == switch_id)
+    except Switch.DoesNotExists:
+        switch = None
+
+    if switch is None:
         abort(404)
+
     switch.delete_instance()
     return jsonify({'result': True})
 
@@ -133,6 +161,7 @@ def not_found(error):
 def unauthorized():
     return make_response(jsonify({'error': 'Unauthorized access'}), 403)
 
+
 if __name__ == '__main__':
-    app.run(debug=True)
-	# app.run(host='0.0.0.0')
+    app.run(host='127.0.0.1')
+    # app.run(debug=True)

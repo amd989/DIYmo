@@ -1,6 +1,8 @@
 <component name="ProjectDictionaryState">
   <dictionary name="Alejandro">
     <words>
+      <w>btoa</w>
+      <w>cors</w>
       <w>initdb</w>
       <w>sqlite</w>
     </words>
