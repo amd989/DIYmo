@@ -77,14 +77,14 @@ def toggle_switch(switch_id):
         abort(404)
 
     outputPin = piFaceDigital.output_pins[switch_id]
-    state = switch[0].state
+    state = switch[0]['state']
     if state:
         outputPin.turn_off()
     else:
         outputPin.turn_on()
 
-    switch[0].state = not state
-    return jsonify({'result': switch[0].state})
+    switch[0]['state'] = not state
+    return jsonify({'state': switch[0]['state']})
 
 
 @app.route('/api/v1.0/switches', methods=['POST'])
