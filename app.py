@@ -11,9 +11,14 @@ from flask import url_for
 from flask import request
 from flask.ext.httpauth import HTTPBasicAuth
 
+# configuration
+SECRET_KEY = 'da96faab-fe57-4bfb-b433-5edff2f1587f'
+
 
 # create our little application
 app = Flask(__name__)
+app.config.from_object(__name__)
+app.config.from_envvar('DIYmo_SETTINGS', silent=True)
 auth = HTTPBasicAuth()
 piFaceDigital = PiFaceDigital()
 
@@ -130,3 +135,4 @@ def unauthorized():
 
 if __name__ == '__main__':
     app.run(debug=True)
+	# app.run(host='0.0.0.0')
