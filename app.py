@@ -1,4 +1,5 @@
 from models import Switch
+from time import sleep
 
 __author__ = 'Alejandro'
 #!flask/bin/python
@@ -83,12 +84,17 @@ def toggle_switch(switch_id):
     if switch is None:
         abort(404)
 
-    # pin = piFaceDigital.output_pins[switch.pin]
-    # state = switch.state
-    # if state:
-    #     pin.turn_off()
-    # else:
-    #     pin.turn_on()
+    pinOn = piFaceDigital.output_pins[switch.pin]
+    pinOff = piFaceDigital.output_pins[switch.pin + 1]
+    state = switch.state
+    if state:
+        pinOff.turn_on()
+        sleep(0.5)
+        pinOff.turn_off()
+    else:
+        pinOn.turn_on()
+        sleep(0.1)
+        pinOn.turn_off()
 
     switch.state = not state
     switch.save()
