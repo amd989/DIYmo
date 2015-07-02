@@ -27,7 +27,7 @@ app.config.from_envvar('DIYmo_SETTINGS', silent=True)
 # cors = CORS(app)
 auth = HTTPBasicAuth()
 piFaceDigital = PiFaceDigital()
-
+pinMap = { 1 : 0, 2 : 2, 3 : 4, 4 : 6, 5 : 8 }      
 
 @auth.get_password
 def get_password(username):
@@ -83,20 +83,8 @@ def toggle_switch(switch_id):
 
     if switch is None:
         abort(404)
-        
-    pinMap = { 1 : 0, 2 : 2, 3 : 4, 4 : 6 }         
-    pinOn = piFaceDigital.output_pins[pinMap[switch.pin]]
-    pinOff = piFaceDigital.output_pins[pinMap[switch.pin] + 1]
-    state = switch.state
-    if state:
-        pinOff.turn_on()
-        sleep(0.5)
-        pinOff.turn_off()
-    else:
-        pinOn.turn_on()
-        sleep(0.1)
-        pinOn.turn_off()
-
+    
+    switch_piface(switch)    
     switch.state = not state
     switch.save()
     return jsonify({'state': switch.state})
@@ -139,7 +127,13 @@ def update_switch(switch_id):
     switch.title = request.json.get('title', switch.title)
     switch.description = request.json.get('description', switch.description)
     switch.pin = request.json.get('pin', switch.pin)
-    switch.state = request.json.get('state', switch.state)
+    
+    switchState = request.json.get('state', switch.state)
+    
+    if(switchState = not switch.state)
+        switch_piface(switch)   
+    
+    switch.state = switchState
     switch.save()
     return jsonify({'switch': make_public_switch(switch)})
 
@@ -168,6 +162,19 @@ def not_found(error):
 def unauthorized():
     return make_response(jsonify({'error': 'Unauthorized access'}), 403)
 
+
+def switch_piface(switch)
+    pinOn = piFaceDigital.output_pins[pinMap[switch.pin]]
+    pinOff = piFaceDigital.output_pins[pinMap[switch.pin] + 1]
+    state = switch.state
+    if state:
+        pinOff.turn_on()
+        sleep(0.5)
+        pinOff.turn_off()
+    else:
+        pinOn.turn_on()
+        sleep(0.1)
+        pinOn.turn_off()
 
 if __name__ == '__main__':
     # app.run(host='127.0.0.1')
