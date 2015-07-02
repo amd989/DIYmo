@@ -130,7 +130,7 @@ def update_switch(switch_id):
     
     switchState = request.json.get('state', switch.state)
     
-    if switchState = not switch.state
+    if switchState is not switch.state
         switch_piface(switch)   
     
     switch.state = switchState
