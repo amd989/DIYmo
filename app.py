@@ -4,7 +4,7 @@ from time import sleep
 __author__ = 'Alejandro'
 #!flask/bin/python
 
-# from pifacedigitalio import PiFaceDigital
+from pifacedigitalio import PiFaceDigital
 from flask import Flask, jsonify
 from flask import abort
 from flask import make_response
@@ -26,7 +26,7 @@ app.config.from_envvar('DIYmo_SETTINGS', silent=True)
 # app.config['CORS_RESOURCES'] = {r"/api/*": {"origins": "*"}}
 # cors = CORS(app)
 auth = HTTPBasicAuth()
-# piFaceDigital = PiFaceDigital()
+piFaceDigital = PiFaceDigital()
 
 
 @auth.get_password
@@ -83,9 +83,10 @@ def toggle_switch(switch_id):
 
     if switch is None:
         abort(404)
-
-    pinOn = piFaceDigital.output_pins[switch.pin]
-    pinOff = piFaceDigital.output_pins[switch.pin + 1]
+        
+    pinMap = { 1 : 0, 2 : 2, 3 : 4, 4 : 6 }         
+    pinOn = piFaceDigital.output_pins[pinMap[switch.pin]]
+    pinOff = piFaceDigital.output_pins[pinMap[switch.pin] + 1]
     state = switch.state
     if state:
         pinOff.turn_on()
@@ -169,5 +170,6 @@ def unauthorized():
 
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1')
+    # app.run(host='127.0.0.1')
     # app.run(debug=True)
+    app.run(host='0.0.0.0')
