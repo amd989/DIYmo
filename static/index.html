@@ -99,9 +99,11 @@
                 <div class="control-group">
                     <div class="controls">
                         <label class="checkbox">
-                            <input data-bind="checked: state" type="checkbox"> State
+                            <input data-bind="checked: state" style="visible: none" type="checkbox"> State
+                             <span data-bind="visible: state" class="label label-success">ON</span>
+                             <span data-bind="visible: !state()" class="label label-important">OFF</span>
                         </label>
-                    </div>
+                    </div>                    
                 </div>
             </form>
         </div>

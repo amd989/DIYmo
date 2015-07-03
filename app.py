@@ -163,13 +163,13 @@ def unauthorized():
     return make_response(jsonify({'error': 'Unauthorized access'}), 403)
 
 
-def switch_piface(switch)
+def switch_piface(switch):
     pinOn = piFaceDigital.output_pins[pinMap[switch.pin]]
     pinOff = piFaceDigital.output_pins[pinMap[switch.pin] + 1]
     state = switch.state
     if state:
         pinOff.turn_on()
-        sleep(0.5)
+        sleep(0.1)
         pinOff.turn_off()
     else:
         pinOn.turn_on()
